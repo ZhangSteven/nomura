@@ -15,6 +15,39 @@ logger = logging.getLogger(__name__)
 
 
 
+
+"""
+	[Dictionary] p (raw holding position) => 
+		[Dictionary] Geneva holding position
+"""
+holdingPosition = lambda date, folder, p: \
+	{ 'portfolio': folder + '_nomura'\
+	, 'custodian': ''\
+	, 'date': date\
+	, 'geneva_investment_id': ''\
+	, 'ISIN': p['Isin']\
+	, 'bloomberg_figi': ''\
+	, 'name': p['Security Name']\
+	, 'currency': p['Security Issue CCY']\
+	, 'quantity': p['TD Quantity']\
+	}
+
+
+
+"""
+	[Dictionary] p (raw cash position) => 
+		[Dictionary] Geneva cash position
+"""
+cashPosition = lambda date, folder, p: \
+	{ 'portfolio': folder + '_nomura'\
+	, 'custodian': ''\
+	, 'date': date\
+	, 'currency': p['Currency']\
+	, 'balance': p['SD Balance Local']\
+	}
+
+
+
 """
 	[Iterable] lines => [String] date, [Iterable] Positions
 
@@ -62,6 +95,14 @@ fileToLines = lambda file: \
 """
 dateFromLine = lambda line: \
 	fromExcelOrdinal(pop(line)).strftime('%Y-%m-%d')
+
+
+
+def outputCsv(inputFile, outputDir):
+	"""
+	[String] inputFile, [String] outputDir
+	"""
+	return ''
 
 
 
