@@ -43,6 +43,7 @@ def getRawPositions(lines):
 			  			 , lines))
 
 
+
 """
 	[String] file => [Iterable] lines
 
