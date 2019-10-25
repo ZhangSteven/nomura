@@ -5,11 +5,13 @@
 # 
 
 from xlrd import open_workbook
-from itertools import takewhile
+from itertools import takewhile, chain
+from functools import partial
 from utils.excel import worksheetToLines
-from utils.utility import fromExcelOrdinal
+from utils.utility import fromExcelOrdinal, dictToValues, writeCsv
 from utils.iter import pop
 from nomura.utility import getCurrentDirectory
+from os.path import join
 import logging
 logger = logging.getLogger(__name__)
 
@@ -98,11 +100,82 @@ dateFromLine = lambda line: \
 
 
 
+isCashFile = lambda fn: \
+	fn.split('\\')[-1].startswith('Cash Stt')
+
+
+
+folderFromFilename = lambda fn: \
+	(lambda s: '_'.join(s.split()))(fn.split('\\')[-2])
+
+
+
+getCashHeaders = lambda: \
+	['portfolio', 'custodian', 'date', 'currency', 'balance']
+
+
+
+getHoldingHeaders = lambda: \
+	[ 'portfolio', 'custodian', 'date', 'geneva_investment_id'\
+	, 'ISIN', 'bloomberg_figi', 'name', 'currency', 'quantity'\
+	]
+
+
+
+getOutputFileName = lambda inputFile, postfix, outputDir: \
+	join(outputDir, folderFromFilename(inputFile) + postfix + '.csv')
+
+
+
+# toOutputData = lambda inputFile: \
+# 	(lambda date, positions: \
+# 		( date + '_cash'
+# 		, chain( [getCashHeaders()]\
+# 			   , map( partial(dictToValues, getCashHeaders())\
+# 			   		, map(cashPosition, positions)))\
+# 		)\
+# 	)(*getPositions(inputFile)) \
+	
+# 	if isCashFile(inputFile) else \
+	
+# 	(lambda date, positions: \
+# 		( date + '_position'
+# 		, chain( [getHoldingHeaders()]\
+# 			   , map( partial(dictToValues, getHoldingHeaders())\
+# 			   		, map(holdingPosition, positions)))\
+# 		)\
+# 	)(*getPositions(inputFile))
+
+
+
+def toOutputData(inputFile):
+	date, positions = getPositions(inputFile)
+	if isCashFile(inputFile):
+		return   '_' + date + '_cash'\
+			   , chain( [getCashHeaders()]\
+			   		  , map( partial(dictToValues, getCashHeaders())\
+			   			   , map( partial(cashPosition, date, folderFromFilename(inputFile))\
+			   			   		, positions)))
+
+	else:
+		return   '_' + date + '_position'\
+			   , chain( [getHoldingHeaders()]\
+			   		  , map( partial(dictToValues, getHoldingHeaders())\
+			   			   , map( partial(holdingPosition, date, folderFromFilename(inputFile))\
+			   			   		, positions)))
+
+
+
 def outputCsv(inputFile, outputDir):
 	"""
 	[String] inputFile, [String] outputDir
 	"""
-	return ''
+	postfix, outputData = toOutputData(inputFile)
+
+	return writeCsv( getOutputFileName(inputFile, postfix, outputDir)\
+				   , outputData\
+				   , delimiter='|'\
+			       )
 
 
 
@@ -111,8 +184,5 @@ if __name__ == '__main__':
 	import logging.config
 	logging.config.fileConfig('logging.config', disable_existing_loggers=False)
 
-	from os.path import join
 	inputFile = join(getCurrentDirectory(), 'samples', 'Cash Stt _22102019.xlsx')
-	_, cash = getPositions(inputFile)
-	for x in cash:
-		print(x)
+	print(outputCsv(inputFile, ''))
