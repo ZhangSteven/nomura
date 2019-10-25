@@ -26,8 +26,9 @@ holdingPosition = lambda date, folder, p: \
 	{ 'portfolio': folder + '_nomura'\
 	, 'custodian': ''\
 	, 'date': date\
-	, 'geneva_investment_id': ''\
-	, 'ISIN': p['Isin']\
+	, 'geneva_investment_id': 'XS1684793018_Bond' if p['Isin'] == 'XS1684793018' \
+								else ''
+	, 'ISIN': '' if p['Isin'] == 'XS1684793018' else p['Isin']
 	, 'bloomberg_figi': ''\
 	, 'name': p['Security Name']\
 	, 'currency': p['Security Issue CCY']\

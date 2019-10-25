@@ -49,12 +49,23 @@ class TestALL(unittest2.TestCase):
 
 
 	def testOutputData2(self):
+		inputFile = join(getCurrentDirectory(), 'samples', 'Holding _24102019.xlsx')
+		postfix, data = (lambda t: (t[0], list(t[1])))(toOutputData(inputFile))
+		self.assertEqual('_2019-10-24_position', postfix)
+		self.assertEqual(49, len(data))
+		self.assertEqual(getHoldingHeaders(), data[0])
+		self.verifyOutputLine2(firstOf( lambda line: line[4] == ''\
+									  , map(list, data)))
+
+
+
+	def testOutputData3(self):
 		inputFile = join(getCurrentDirectory(), 'samples', 'Cash Stt _22102019.xlsx')
 		postfix, data = (lambda t: (t[0], list(t[1])))(toOutputData(inputFile))
 		self.assertEqual('_2019-10-22_cash', postfix)
 		self.assertEqual(2, len(data))
 		self.assertEqual(getCashHeaders(), data[0])
-		self.verifyOutputLine2(list(data[1]))
+		self.verifyOutputLine3(list(data[1]))
 
 
 
@@ -107,6 +118,27 @@ class TestALL(unittest2.TestCase):
 
 
 	def verifyOutputLine2(self, line):
+		"""
+		The special case: XS1684793018
+
+		Output data items:
+
+		portfolio|custodian|date|geneva_investment_id|ISIN|
+		bloomberg_figi|name|currency|quantity
+		"""
+		self.assertEqual('samples_nomura', line[0])
+		self.assertEqual('', line[1])
+		self.assertEqual('2019-10-24', line[2])
+		self.assertEqual('XS1684793018_Bond', line[3])
+		self.assertEqual('', line[4])
+		self.assertEqual('', line[5])
+		self.assertEqual('POSTAL SAVINGS BANK OF CHINA CO LTD FRN', line[6])
+		self.assertEqual('USD', line[7])
+		self.assertEqual(3000000, line[8])
+
+
+
+	def verifyOutputLine3(self, line):
 		"""
 		Output data items
 
