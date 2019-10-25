@@ -107,10 +107,17 @@ fileToLines = lambda file: \
 """
 	[List] line => [String] date (yyyy-mm-dd)
 
-	First line in Nomura holding or cash report
+	First item in the line is the date. Most of the time the date is
+	read a float number, but sometimes it is read as a string (dd/mm/yyyy)
 """
 dateFromLine = lambda line: \
-	fromExcelOrdinal(pop(line)).strftime('%Y-%m-%d')
+	(lambda x: \
+		fromExcelOrdinal(x).strftime('%Y-%m-%d') \
+		if isinstance(x, float) else \
+		(lambda items: \
+			items[2] + '-' + items[1] + '-' + items[0]
+		)(x.split('/'))
+	)(line[0])
 
 
 

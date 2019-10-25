@@ -58,6 +58,14 @@ class TestALL(unittest2.TestCase):
 
 
 
+	def testOutputData3(self):
+		inputFile = join(getCurrentDirectory(), 'samples', 'Holding _24102019.xlsx')
+		postfix, data = (lambda t: (t[0], list(t[1])))(toOutputData(inputFile))
+		self.assertEqual('_2019-10-24_position', postfix)
+		self.assertEqual(49, len(data))
+
+
+
 	def verifyRawPosition(self, position):
 		"""
 		EASY TACTIC LTD 9.125% 28/07/2022
