@@ -62,20 +62,34 @@ getPositions = lambda file: \
 
 
 
-def getRawPositions(lines):
-	"""
+"""
+	[Iterable] lines => ([List] headers, [Iterable] lines)
+
+	Take the first line and convert it to headers, then return the
+	headers and the remaining lines.
+
+	This is NOT a pure function. The first line of lines is consumed.
+"""
+getHeadersnLines = lambda lines: \
+	( list(takewhile(lambda x: x != '', map(lambda x: x.strip(), pop(lines))))\
+	, lines\
+	)
+
+
+
+"""
 	[Iterable] lines => [Iterable] Positions
 
 	lines: rows in a file, where each row is a list of columns
 
 	Assume the first line is column headers
-	"""
-	headers = list(takewhile( lambda x: x != ''\
-					  		, map(lambda x: x.strip(), pop(lines))))
-
-	return map( lambda line: dict(zip(headers, line))\
-			  , takewhile( lambda line: not line[0].startswith('Record Count')\
-			  			 , lines))
+"""
+getRawPositions = lambda lines: \
+	(lambda headers, lines: \
+		map( lambda line: dict(zip(headers, line))\
+		   , takewhile( lambda line: not line[0].startswith('Record Count')\
+			  		  , lines))
+	)(*getHeadersnLines(lines))
 
 
 
@@ -127,55 +141,30 @@ getOutputFileName = lambda inputFile, postfix, outputDir: \
 
 
 
-# toOutputData = lambda inputFile: \
-# 	(lambda date, positions: \
-# 		( date + '_cash'
-# 		, chain( [getCashHeaders()]\
-# 			   , map( partial(dictToValues, getCashHeaders())\
-# 			   		, map(cashPosition, positions)))\
-# 		)\
-# 	)(*getPositions(inputFile)) \
-	
-# 	if isCashFile(inputFile) else \
-	
-# 	(lambda date, positions: \
-# 		( date + '_position'
-# 		, chain( [getHoldingHeaders()]\
-# 			   , map( partial(dictToValues, getHoldingHeaders())\
-# 			   		, map(holdingPosition, positions)))\
-# 		)\
-# 	)(*getPositions(inputFile))
+toOutputData = lambda inputFile: \
+	(lambda date, positions: \
+		( '_' + date + '_cash'\
+		, chain( [getCashHeaders()]\
+			   , map( partial(dictToValues, getCashHeaders())\
+			   		, map( partial(cashPosition, date, folderFromFilename(inputFile))\
+			   			 , positions)))\
+		) if isCashFile(inputFile) else \
+
+		( '_' + date + '_position'\
+		, chain( [getHoldingHeaders()]\
+			   , map( partial(dictToValues, getHoldingHeaders())\
+			   		, map( partial(holdingPosition, date, folderFromFilename(inputFile))\
+			   			 , positions)))\
+		)
+	)(*getPositions(inputFile))
 
 
 
-def toOutputData(inputFile):
-	date, positions = getPositions(inputFile)
-	if isCashFile(inputFile):
-		return   '_' + date + '_cash'\
-			   , chain( [getCashHeaders()]\
-			   		  , map( partial(dictToValues, getCashHeaders())\
-			   			   , map( partial(cashPosition, date, folderFromFilename(inputFile))\
-			   			   		, positions)))
-
-	else:
-		return   '_' + date + '_position'\
-			   , chain( [getHoldingHeaders()]\
-			   		  , map( partial(dictToValues, getHoldingHeaders())\
-			   			   , map( partial(holdingPosition, date, folderFromFilename(inputFile))\
-			   			   		, positions)))
-
-
-
-def outputCsv(inputFile, outputDir):
-	"""
-	[String] inputFile, [String] outputDir
-	"""
-	postfix, outputData = toOutputData(inputFile)
-
-	return writeCsv( getOutputFileName(inputFile, postfix, outputDir)\
-				   , outputData\
-				   , delimiter='|'\
-			       )
+outputCsv = lambda inputFile, outputDir: \
+	(lambda postfix, outputData: \
+		writeCsv( getOutputFileName(inputFile, postfix, outputDir)\
+				, outputData, delimiter='|')
+	)(*toOutputData(inputFile))
 
 
 
@@ -184,5 +173,6 @@ if __name__ == '__main__':
 	import logging.config
 	logging.config.fileConfig('logging.config', disable_existing_loggers=False)
 
-	inputFile = join(getCurrentDirectory(), 'samples', 'Cash Stt _22102019.xlsx')
+	# inputFile = join(getCurrentDirectory(), 'samples', 'Cash Stt _22102019.xlsx')
+	inputFile = join(getCurrentDirectory(), 'samples', 'Holding _22102019.xlsx')
 	print(outputCsv(inputFile, ''))
