@@ -19,11 +19,12 @@ logger = logging.getLogger(__name__)
 
 
 """
+	[String] date (yyyy-mm-dd),
 	[Dictionary] p (raw holding position) => 
 		[Dictionary] Geneva holding position
 """
-holdingPosition = lambda date, folder, p: \
-	{ 'portfolio': folder + '_nomura'\
+holdingPosition = lambda date, p: \
+	{ 'portfolio': p['Account ID']\
 	, 'custodian': ''\
 	, 'date': date\
 	, 'geneva_investment_id': 'XS1684793018_Bond' if p['Isin'] == 'XS1684793018' \
@@ -38,11 +39,12 @@ holdingPosition = lambda date, folder, p: \
 
 
 """
+	[String] date (yyyy-mm-dd),
 	[Dictionary] p (raw cash position) => 
 		[Dictionary] Geneva cash position
 """
-cashPosition = lambda date, folder, p: \
-	{ 'portfolio': folder + '_nomura'\
+cashPosition = lambda date, p: \
+	{ 'portfolio': p['Account ID']\
 	, 'custodian': ''\
 	, 'date': date\
 	, 'currency': p['Currency']\
@@ -109,7 +111,7 @@ fileToLines = lambda file: \
 	[List] line => [String] date (yyyy-mm-dd)
 
 	First item in the line is the date. Most of the time the date is
-	read a float number, but sometimes it is read as a string (dd/mm/yyyy)
+	read a float number, but sometimes it is a string (dd/mm/yyyy)
 """
 dateFromLine = lambda line: \
 	(lambda x: \
@@ -151,17 +153,17 @@ getOutputFileName = lambda inputFile, postfix, outputDir: \
 
 toOutputData = lambda inputFile: \
 	(lambda date, positions: \
-		( '_' + date + '_cash'\
+		( '_nomura_' + date + '_cash'\
 		, chain( [getCashHeaders()]\
 			   , map( partial(dictToValues, getCashHeaders())\
-			   		, map( partial(cashPosition, date, folderFromFilename(inputFile))\
+			   		, map( partial(cashPosition, date)\
 			   			 , positions)))\
 		) if isCashFile(inputFile) else \
 
-		( '_' + date + '_position'\
+		( '_nomura_' + date + '_position'\
 		, chain( [getHoldingHeaders()]\
 			   , map( partial(dictToValues, getHoldingHeaders())\
-			   		, map( partial(holdingPosition, date, folderFromFilename(inputFile))\
+			   		, map( partial(holdingPosition, date)\
 			   			 , positions)))\
 		)
 	)(*getPositions(inputFile))
